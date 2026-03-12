@@ -1,0 +1,14 @@
+services:
+  app:
+    image: ${IMAGE_TAG:-bunrithbuth/pp:latest}
+    container_name: nextjs-dashboard-prod
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      POSTGRES_URL: ${POSTGRES_URL:-}
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      AUTH_URL: ${AUTH_URL:-}
+    restart: unless-stopped
