@@ -52,42 +52,15 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-
             mkdir -p "$HOME/apps/p"
             cd "$HOME/apps/p"
 
-            cat > docker-compose.ec2.yml <<'EOF'
-            services:
-              app:
-                image: "${IMAGE_TAG:-bunrithbuth/pp:latest}"
-                container_name: nextjs-dashboard-prod
-                ports:
-                  - "3000:3000"
-                environment:
-                  NODE_ENV: production
-                  PORT: 3000
-                  HOSTNAME: 0.0.0.0
-                  POSTGRES_URL: "${POSTGRES_URL:-}"
-                  AUTH_SECRET: "${AUTH_SECRET:-}"
-                  AUTH_URL: "${AUTH_URL:-}"
-                restart: unless-stopped
-            EOF
+            printf '%s\n' 'services:' '  app:' '    image: "${IMAGE_TAG:-bunrithbuth/pp:latest}"' '    container_name: nextjs-dashboard-prod' '    ports:' '      - "3000:3000"' '    environment:' '      NODE_ENV: production' '      PORT: 3000' '      HOSTNAME: 0.0.0.0' '      POSTGRES_URL: "${POSTGRES_URL:-}"' '      AUTH_SECRET: "${AUTH_SECRET:-}"' '      AUTH_URL: "${AUTH_URL:-}"' '    restart: unless-stopped' > docker-compose.ec2.yml
 
-            cat > .env <<'EOF'
-            IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}
-            POSTGRES_URL=${{ secrets.POSTGRES_URL }}
-            AUTH_SECRET=${{ secrets.AUTH_SECRET }}
-            AUTH_URL=${{ secrets.AUTH_URL }}
-            EOF
+            printf '%s\n' "IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}" "POSTGRES_URL=${{ secrets.POSTGRES_URL }}" "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" "AUTH_URL=${{ secrets.AUTH_URL }}" > .env
 
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
             docker compose version
-            echo "--- docker-compose.ec2.yml ---"
-            cat -n docker-compose.ec2.yml
-            echo "--- .env keys ---"
-            grep -E '^(IMAGE_TAG|POSTGRES_URL|AUTH_SECRET|AUTH_URL)=' .env | sed 's/=.*$/=<redacted>/'
-
             docker compose --env-file .env -f docker-compose.ec2.yml config > /tmp/compose.rendered.yml
             docker compose --env-file .env -f docker-compose.ec2.yml pull
             docker compose --env-file .env -f docker-compose.ec2.yml up -d --remove-orphans
