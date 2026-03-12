@@ -56,7 +56,7 @@ jobs:
             mkdir -p "$HOME/apps/p"
             cd "$HOME/apps/p"
 
-            cat > docker-compose.ec2.yml << 'EOF'
+            cat > docker-compose.ec2.yml <<'EOF'
             services:
               app:
                 image: "${IMAGE_TAG:-bunrithbuth/pp:latest}"
@@ -73,7 +73,7 @@ jobs:
                 restart: unless-stopped
             EOF
 
-            cat > .env << 'EOF'
+            cat > .env <<'EOF'
             IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}
             POSTGRES_URL=${{ secrets.POSTGRES_URL }}
             AUTH_SECRET=${{ secrets.AUTH_SECRET }}
@@ -81,6 +81,12 @@ jobs:
             EOF
 
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+            docker compose version
+            echo "--- docker-compose.ec2.yml ---"
+            cat -n docker-compose.ec2.yml
+            echo "--- .env keys ---"
+            grep -E '^(IMAGE_TAG|POSTGRES_URL|AUTH_SECRET|AUTH_URL)=' .env | sed 's/=.*$/=<redacted>/'
 
             docker compose --env-file .env -f docker-compose.ec2.yml config > /tmp/compose.rendered.yml
             docker compose --env-file .env -f docker-compose.ec2.yml pull
