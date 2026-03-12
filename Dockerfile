@@ -4,8 +4,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm install -g pnpm@9.15.4
 
 FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json ./
+COPY pnpm-lock.yaml* ./
+RUN if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install; fi
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules

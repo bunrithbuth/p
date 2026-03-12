@@ -69,3 +69,4 @@ docker compose version
 ```
 
 A reusable EC2 compose template and env example are in `deploy/docker-compose.ec2.yml` and `deploy/.env.ec2.example`.
+
