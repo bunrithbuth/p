@@ -55,7 +55,7 @@ jobs:
             mkdir -p "$HOME/apps/p"
             cd "$HOME/apps/p"
 
-            printf '%s\n' 'services:' '  app:' '    image: "${IMAGE_TAG:-bunrithbuth/pp:latest}"' '    container_name: nextjs-dashboard-prod' '    ports:' '      - "3000:3000"' '    environment:' '      NODE_ENV: production' '      PORT: 3000' '      HOSTNAME: 0.0.0.0' '      POSTGRES_URL: "${POSTGRES_URL:-}"' '      AUTH_SECRET: "${AUTH_SECRET:-}"' '      AUTH_URL: "${AUTH_URL:-}"' '    restart: unless-stopped' > docker-compose.ec2.yml
+            printf '%s\n' 'services:' '  app:' '    image: "${IMAGE_TAG:-bunrithbuth/pp:latest}"' '    container_name: nextjs-dashboard-prod' '    ports:' '      - "80:3000"' '    environment:' '      NODE_ENV: production' '      PORT: 3000' '      HOSTNAME: 0.0.0.0' '      POSTGRES_URL: "${POSTGRES_URL:-}"' '      AUTH_SECRET: "${AUTH_SECRET:-}"' '      AUTH_URL: "${AUTH_URL:-}"' '    restart: unless-stopped' > docker-compose.ec2.yml
 
             printf '%s\n' "IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}" "POSTGRES_URL=${{ secrets.POSTGRES_URL }}" "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" "AUTH_URL=${{ secrets.AUTH_URL }}" > .env
 
