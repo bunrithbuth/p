@@ -1,0 +1,114 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    font-family: system-ui, sans-serif;
+    display: grid;
+    place-items: center;
+    background: #000;
+    overflow: hidden;
+}
+
+/* ── Nav ── */
+nav {
+    position: fixed;
+    width: 100vw;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    will-change: opacity;
+    z-index: 2;
+    top: 0;
+}
+
+nav > div {
+    flex: 1;
+}
+
+nav .nav-links {
+    display: flex;
+    gap: 3rem;
+}
+
+nav .logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+nav .logo svg {
+    width: 2rem;
+    height: auto;
+    opacity: 0;
+    transition: opacity 0.4s ease, filter 0.8s ease;
+    /* faded in by JS after hero lands */
+}
+
+nav .logo svg path {
+    fill: #fff;
+    stroke: none;
+}
+
+/* ── Hero banner ── */
+.banner {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#hero-logo {
+    display: block;
+    transform-origin: center;
+    /* movement handled by JS FLIP */
+}
+
+#hero-logo path {
+    fill: white;
+    stroke: white;
+    stroke-width: 0.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation:
+            outlineDraw 3s cubic-bezier(0.4, 0, 0.2, 1) forwards
+            /*textFill 1.5s ease forwards 2s;*/
+}
+
+/* ── Keyframes ── */
+@keyframes outlineDraw {
+    from { stroke-dashoffset: 1; }
+    to   { stroke-dashoffset: 0; }
+}
+
+@keyframes textFill {
+    from { fill: transparent; }
+    to   { fill: #fff; }
+}
+
+@keyframes heroSlideUp {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(-110vh);
+        opacity: 0;
+    }
+}
+
+@keyframes navLogoFadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

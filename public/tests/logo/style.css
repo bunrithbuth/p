@@ -1,0 +1,115 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  font-family: system-ui, sans-serif;
+  display: grid;
+  place-items: center;
+  background: #000;
+  overflow: hidden;
+}
+
+/* ── Nav ── */
+nav {
+  position: fixed;
+  width: 100vw;
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  will-change: opacity;
+  z-index: 2;
+  top: 0;
+}
+
+nav > div {
+  flex: 1;
+}
+
+nav .nav-links {
+  display: flex;
+  gap: 3rem;
+}
+
+nav .logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+nav .logo svg {
+  width: 2rem;
+  height: auto;
+  opacity: 0;
+  /* fade in after hero finishes sliding up: 3.9s draw+fill + 0.7s slide = 4.6s */
+  animation: navLogoFadeIn 0.5s ease forwards 4.7s;
+}
+
+nav .logo svg path {
+  fill: #fff;
+  stroke: none;
+}
+
+/* ── Hero banner ── */
+.banner {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#hero-logo {
+  display: block;
+  transform-origin: center;
+  /* slide up after fill completes (3.9s) */
+  animation: heroSlideUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards 3.9s;
+}
+
+#hero-logo path {
+  fill: transparent;
+  stroke: #fff;
+  stroke-width: 0.12;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 320;
+  stroke-dashoffset: 320;
+  animation:
+    outlineDraw 3s cubic-bezier(0.4, 0, 0.2, 1) forwards,
+    textFill 0.9s ease forwards 3s;
+}
+
+/* ── Keyframes ── */
+@keyframes outlineDraw {
+  from { stroke-dashoffset: 320; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes textFill {
+  from { fill: transparent; }
+  to   { fill: #fff; }
+}
+
+@keyframes heroSlideUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-110vh);
+    opacity: 0;
+  }
+}
+
+@keyframes navLogoFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

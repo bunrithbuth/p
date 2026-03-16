@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Combined</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+
+        /* ── Three.js canvas ── */
+        canvas { display: block; position: fixed; inset: 0; z-index: 0; }
+
+
+        /* ── SVG logo phase (phase 2) ── */
+        #logo-phase {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.45s ease;
+        }
+
+        #hero-logo {
+            display: block;
+            transform-origin: center;
+            opacity: 1;
+        }
+
+        #hero-logo .hero-base {
+            fill: transparent;
+            stroke: url(#chrome-stroke);
+            stroke-width: 0.9;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 1;
+            stroke-dashoffset: 1;
+            filter: drop-shadow(0 0 3px rgba(210, 220, 230, 0.5));
+            animation:
+                outlineDraw 3s cubic-bezier(0.4, 0, 0.2, 1) forwards paused,
+                fillIn 0.45s ease 2.85s forwards paused;
+        }
+
+        #hero-logo .hero-shine {
+            fill: none;
+            stroke: url(#chrome-shine);
+            stroke-width: 1.1;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 0.18 0.82;
+            stroke-dashoffset: 1;
+            opacity: 0;
+            mix-blend-mode: screen;
+            filter:
+                drop-shadow(0 0 10px rgba(255, 255, 255, 0.95))
+                drop-shadow(0 0 20px rgba(190, 225, 255, 0.5));
+            animation:
+                shineOn    0.2s  ease                              2.8s 1 forwards paused,
+                chromeSweep 2.6s cubic-bezier(0.22, 1, 0.36, 1)  2.8s 1 forwards paused,
+                shineOff   0.5s  ease                             5.3s 1 forwards paused;
+        }
+
+        #hero-logo.running .hero-base  { animation-play-state: running; }
+        #hero-logo.running .hero-shine { animation-play-state: running; }
+
+        /* ── Nav ── */
+        nav {
+            position: fixed;
+            width: 100vw;
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            z-index: 30;
+            top: 0;
+        }
+        nav > div { flex: 1; }
+        nav .nav-links { display: flex; gap: 3rem; }
+        nav .logo { display: flex; justify-content: center; align-items: center; }
+        nav .logo svg { width: 2rem; height: auto; opacity: 0; transition: opacity 0.4s ease, filter 0.8s ease; }
+
+        @keyframes outlineDraw {
+            from { stroke-dashoffset: 1; }
+            to   { stroke-dashoffset: 0; }
+        }
+        @keyframes shineOn   { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes chromeSweep {
+            from { stroke-dashoffset:  1; }
+            to   { stroke-dashoffset: -1; }
+        }
+        @keyframes shineOff  { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes fillIn    { from { fill: transparent; } to { fill: #fff; } }
+    </style>
+</head>
+<body>
+
+<!-- Nav (phase 2 end) -->
+<nav id="nav">
+    <div class="nav-links"></div>
+    <div class="logo">
+        <svg id="nav-logo" width="32" height="32" viewBox="0 0 87 71" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3.41797 70.0195C1.13932 70.0195 0 68.7988 0 66.3574V3.66211C0 1.2207 1.13932 0 3.41797 0H10.8398C13.1185 0 14.2578 1.2207 14.2578 3.66211V66.3574C14.2578 68.7988 13.1185 70.0195 10.8398 70.0195H3.41797ZM33.3008 70.0195C31.0221 70.0195 29.8828 68.7988 29.8828 66.3574V3.66211C29.8828 1.2207 31.0221 0 33.3008 0H40.5273C43.3268 0 45.4427 1.13932 46.875 3.41797L71.7773 43.4082H72.1191C71.9564 41.4551 71.875 39.502 71.875 37.5488V3.66211C71.875 1.2207 73.0143 0 75.293 0H82.7148C84.9935 0 86.1328 1.2207 86.1328 3.66211V66.3574C86.1328 68.7988 84.9935 70.0195 82.7148 70.0195H75.9766C73.1771 70.0195 71.0612 68.8802 69.6289 66.6016L44.2383 25.8789H43.8965C44.0592 27.832 44.1406 29.7852 44.1406 31.7383V66.3574C44.1406 68.7988 43.0013 70.0195 40.7227 70.0195H33.3008Z" fill="white"/>
+        </svg>
+    </div>
+    <div class="nav-links"></div>
+</nav>
+
+
+<!-- Phase 2: SVG logo draw + chrome shine -->
+<div id="logo-phase">
+    <svg id="hero-logo" width="360" height="360" viewBox="0 0 87 71" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="chrome-stroke" x1="0" y1="0" x2="87" y2="71" gradientUnits="userSpaceOnUse">
+                <stop offset="0%"   stop-color="#5a6068"/>
+                <stop offset="20%"  stop-color="#d8dde3"/>
+                <stop offset="42%"  stop-color="#f9fbfc"/>
+                <stop offset="58%"  stop-color="#b0b8c1"/>
+                <stop offset="80%"  stop-color="#f4f7fa"/>
+                <stop offset="100%" stop-color="#52595f"/>
+            </linearGradient>
+            <linearGradient id="chrome-shine" x1="0" y1="0" x2="87" y2="71" gradientUnits="userSpaceOnUse">
+                <stop offset="0%"   stop-color="#fff" stop-opacity="0"/>
+                <stop offset="47%"  stop-color="#fff" stop-opacity="0"/>
+                <stop offset="50%"  stop-color="#fff" stop-opacity="1"/>
+                <stop offset="53%"  stop-color="#dff1ff" stop-opacity="0.95"/>
+                <stop offset="56%"  stop-color="#fff" stop-opacity="0"/>
+                <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+            </linearGradient>
+        </defs>
+        <path class="hero-base" pathLength="1" d="M3.41797 70.0195C1.13932 70.0195 0 68.7988 0 66.3574V3.66211C0 1.2207 1.13932 0 3.41797 0H10.8398C13.1185 0 14.2578 1.2207 14.2578 3.66211V66.3574C14.2578 68.7988 13.1185 70.0195 10.8398 70.0195H3.41797ZM33.3008 70.0195C31.0221 70.0195 29.8828 68.7988 29.8828 66.3574V3.66211C29.8828 1.2207 31.0221 0 33.3008 0H40.5273C43.3268 0 45.4427 1.13932 46.875 3.41797L71.7773 43.4082H72.1191C71.9564 41.4551 71.875 39.502 71.875 37.5488V3.66211C71.875 1.2207 73.0143 0 75.293 0H82.7148C84.9935 0 86.1328 1.2207 86.1328 3.66211V66.3574C86.1328 68.7988 84.9935 70.0195 82.7148 70.0195H75.9766C73.1771 70.0195 71.0612 68.8802 69.6289 66.6016L44.2383 25.8789H43.8965C44.0592 27.832 44.1406 29.7852 44.1406 31.7383V66.3574C44.1406 68.7988 43.0013 70.0195 40.7227 70.0195H33.3008Z"/>
+        <path class="hero-shine" pathLength="1" d="M3.41797 70.0195C1.13932 70.0195 0 68.7988 0 66.3574V3.66211C0 1.2207 1.13932 0 3.41797 0H10.8398C13.1185 0 14.2578 1.2207 14.2578 3.66211V66.3574C14.2578 68.7988 13.1185 70.0195 10.8398 70.0195H3.41797ZM33.3008 70.0195C31.0221 70.0195 29.8828 68.7988 29.8828 66.3574V3.66211C29.8828 1.2207 31.0221 0 33.3008 0H40.5273C43.3268 0 45.4427 1.13932 46.875 3.41797L71.7773 43.4082H72.1191C71.9564 41.4551 71.875 39.502 71.875 37.5488V3.66211C71.875 1.2207 73.0143 0 75.293 0H82.7148C84.9935 0 86.1328 1.2207 86.1328 3.66211V66.3574C86.1328 68.7988 84.9935 70.0195 82.7148 70.0195H75.9766C73.1771 70.0195 71.0612 68.8802 69.6289 66.6016L44.2383 25.8789H43.8965C44.0592 27.832 44.1406 29.7852 44.1406 31.7383V66.3574C44.1406 68.7988 43.0013 70.0195 40.7227 70.0195H33.3008Z"/>
+    </svg>
+</div>
+
+<!-- Phase 1: Three.js -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    // ── Three.js setup ──
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const scene  = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+
+    const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 2000);
+    camera.position.set(0, 0, 400);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 2));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(5, 8, 5);
+    scene.add(dirLight);
+
+    let model;
+    new GLTFLoader().load('/tests/threejs-template/int.glb', (gltf) => {
+        model = gltf.scene;
+        scene.add(model);
+        const box    = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        const size   = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale  = 200 / maxDim;
+        model.scale.setScalar(scale);
+        box.setFromObject(model);
+        box.getCenter(center);
+        model.position.sub(center);
+    }, undefined, (err) => console.error('GLB load error:', err));
+
+    window.addEventListener('resize', () => {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+    });
+
+    // ── DOM refs ──
+    const logoPhase    = document.getElementById('logo-phase');
+    const heroLogo     = document.getElementById('hero-logo');
+    const navLogo      = document.getElementById('nav-logo');
+
+
+    // ── State ──
+    const INITIAL_Z   = 400;
+    const TARGET_Z    = INITIAL_Z * 0.5;
+    let fullRotDone   = false;
+    let zooming       = false;
+    let fadingOut     = false;
+    let phase2Started = false;
+    let flyStarted    = false;
+
+    // ── Animation loop ──
+    renderer.setAnimationLoop(() => {
+        if (model) {
+            if (!fullRotDone) {
+                model.rotation.y = Math.min(model.rotation.y + 0.01, Math.PI * 2);
+            }
+
+            if (!fullRotDone && model.rotation.y >= Math.PI * 2) {
+                fullRotDone = true;
+                zooming     = true;
+            }
+
+            if (zooming) {
+                camera.position.z += (TARGET_Z - camera.position.z) * 0.05;
+                scene.background.lerp(new THREE.Color(0x000000), 0.05);
+
+                if (Math.abs(camera.position.z - TARGET_Z) < 0.1) {
+                    camera.position.z = TARGET_Z;
+                    scene.background.set(0x000000);
+                    zooming   = false;
+                    fadingOut = true;
+                }
+            }
+
+            if (fadingOut) {
+                if (!phase2Started) {
+                    phase2Started = true;
+                    startPhase2();
+                }
+
+                let allGone = true;
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material.transparent = true;
+                        child.material.opacity = Math.max(0, child.material.opacity - 0.02);
+                        if (child.material.opacity > 0) allGone = false;
+                    }
+                });
+                if (allGone) {
+                    model.visible = false;
+                }
+            }
+        }
+        renderer.render(scene, camera);
+    });
+
+    // ── Phase 2: SVG logo → fly to nav ──
+    function startPhase2() {
+        // Fade in SVG while 3D fades out, so there is no dead transition gap.
+        logoPhase.style.opacity = '1';
+
+        // Start chrome outline/fill animations.
+        heroLogo.classList.add('running');
+
+        // Launch fly only once when the shine sequence fully ends.
+        const shinePath = heroLogo.querySelector('.hero-shine');
+        shinePath.addEventListener('animationend', (e) => {
+            if (e.animationName !== 'shineOff' || flyStarted) return;
+            flyStarted = true;
+            flyHeroToNav();
+        });
+    }
+
+    function flyHeroToNav() {
+        const heroRect = heroLogo.getBoundingClientRect();
+        const navRect  = navLogo.getBoundingClientRect();
+
+        const scale = Math.min(navRect.width / heroRect.width, navRect.height / heroRect.height);
+        const tx = (navRect.left + navRect.width  / 2) - (heroRect.left + heroRect.width  / 2);
+        const ty = (navRect.top  + navRect.height / 2) - (heroRect.top  + heroRect.height / 2);
+
+        heroLogo.style.transition      = 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        heroLogo.style.transformOrigin = '50% 50%';
+        heroLogo.style.transform       = `translate(${tx}px, ${ty}px) scale(${scale})`;
+
+        // Fade in nav logo after hero lands
+        setTimeout(() => {
+            navLogo.style.opacity = '1';
+
+            // Fade out hero, then invert colours
+            setTimeout(() => {
+                heroLogo.style.transition += ', opacity 0.3s ease';
+                heroLogo.style.opacity = '0';
+
+                setTimeout(() => {
+                    document.body.style.transition = 'background 0.8s ease';
+                    document.body.style.background = '#fff';
+                    navLogo.style.filter           = 'invert(1)';
+                }, 400);
+            }, 300);
+        }, 800);
+    }
+</script>
+</body>
+</html>
+

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Matilda</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; }
+      canvas { display: block; position: fixed; inset: 0; }
+
+      #text {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      #text span {
+        position: absolute;
+        font-family: system-ui, sans-serif;
+        font-size: clamp(2rem, 8vw, 7rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #111;
+        opacity: 0;
+        transform: translateY(40px);
+        transition: opacity 0.8s ease, transform 0.8s ease;
+      }
+
+      #text span.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      #text span.gone {
+        opacity: 0;
+        transform: translateY(-40px);
+      }
+
+      #new-bg {
+        position: fixed;
+        inset: 0;
+        background: #0a0a0a;
+        /* swap this for any color, gradient, or image you want */
+        /* background: url('your-image.jpg') center/cover no-repeat; */
+        opacity: 0;
+        z-index: 0;
+        transition: opacity 1.2s ease;
+        pointer-events: none;
+      }
+
+      #new-bg.visible {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="new-bg"></div>
+    <div id="text">
+      <span id="t1">matilda</span>
+      <span id="t2">is</span>
+      <span id="t3">queen</span>
+    </div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from 'three';
+      import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(innerWidth, innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const scene  = new THREE.Scene();
+      scene.background = new THREE.Color(0xffffff);
+
+      const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 2000);
+      camera.position.set(0, 0, 400);
+
+      scene.add(new THREE.AmbientLight(0xffffff, 2));
+      const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+      dirLight.position.set(5, 8, 5);
+      scene.add(dirLight);
+
+      let model;
+      new GLTFLoader().load('/tests/threejs-template/matilda.glb', (gltf) => {
+        model = gltf.scene;
+        scene.add(model);
+        const box    = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.sub(center);
+      });
+
+      window.addEventListener('resize', () => {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+      });
+
+      const triggers = [
+        { el: document.getElementById('t1'), at: Math.PI * 0.5 },  // 25%
+        { el: document.getElementById('t2'), at: Math.PI * 1.0 },  // 50%
+        { el: document.getElementById('t3'), at: Math.PI * 1.5 },  // 75%
+      ];
+
+      let current   = -1;
+      let zooming   = false;
+      const newBg   = document.getElementById('new-bg');
+      const TARGET_Z = 40; // how close the camera zooms in
+
+      renderer.setAnimationLoop(() => {
+        if (model) {
+          if (!zooming) {
+            model.rotation.y += 0.05;
+
+            triggers.forEach((t, i) => {
+              if (!t.shown && model.rotation.y >= t.at) {
+                t.shown = true;
+
+                if (current >= 0) {
+                  triggers[current].el.classList.remove('visible');
+                  triggers[current].el.classList.add('gone');
+                }
+
+                t.el.classList.add('visible');
+                current = i;
+
+                // After queen (last trigger), start zoom
+                if (i === triggers.length - 1) {
+                  setTimeout(() => { zooming = true; }, 800);
+                }
+              }
+            });
+          } else {
+            // Parallax zoom — camera rushes forward
+            camera.position.z += (TARGET_Z - camera.position.z) * 0.04;
+
+            // Slightly slow down model spin during zoom
+            model.rotation.y += 0.01;
+
+            // Once close enough, reveal new bg and hide model text
+            if (camera.position.z < TARGET_Z + 20 && !newBg.classList.contains('visible')) {
+              newBg.classList.add('visible');
+              // hide queen text too
+              triggers[current].el.classList.remove('visible');
+              triggers[current].el.classList.add('gone');
+            }
+          }
+        }
+
+        renderer.render(scene, camera);
+      });
+    </script>
+  </body>
+</html>
+

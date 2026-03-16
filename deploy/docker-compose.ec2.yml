@@ -3,7 +3,7 @@ services:
     image: ${IMAGE_TAG:-bunrithbuth/pp:latest}
     container_name: nextjs-dashboard-prod
     ports:
-      - "3000:3000"
+      - "80:3000"
     environment:
       NODE_ENV: production
       PORT: 3000

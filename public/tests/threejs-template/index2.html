@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Matilda</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; }
+        canvas { display: block; position: fixed; inset: 0; }
+
+        #text {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #text span {
+            position: absolute;
+            font-family: system-ui, sans-serif;
+            font-size: clamp(2rem, 8vw, 7rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #111;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        #text span.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #text span.gone {
+            opacity: 0;
+            transform: translateY(-40px);
+        }
+
+        #new-bg {
+            position: fixed;
+            inset: 0;
+            background: #0a0a0a;
+            /* swap this for any color, gradient, or image you want */
+            /* background: url('your-image.jpg') center/cover no-repeat; */
+            opacity: 0;
+            z-index: 0;
+            transition: opacity 1.2s ease;
+            pointer-events: none;
+        }
+
+        #new-bg.visible {
+            opacity: 1;
+        }
+
+        #overlay-text {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #overlay-text span {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-family: system-ui, sans-serif;
+            font-size: 9rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #ffffff;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            will-change: left, top, font-size, opacity;
+        }
+
+        #overlay-text.visible span {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+<div id="new-bg"></div>
+<div id="overlay-text"><span>IN</span></div>
+<div id="text">
+    <span id="t1">matilda</span>
+    <span id="t2">is</span>
+    <span id="t3">queen</span>
+</div>
+<script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"
+      }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const scene  = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
+
+    const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 2000);
+    camera.position.set(0, 0, 400);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 2));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(5, 8, 5);
+    scene.add(dirLight);
+
+    let model;
+    new GLTFLoader().load('/tests/threejs-template/int.glb', (gltf) => {
+        model = gltf.scene;
+        scene.add(model);
+
+        // Auto-fit: center and scale model to fill ~60% of the view
+        const box    = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        const size   = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+
+        // Scale so the model is always a reasonable size on screen
+        const desiredSize = 200;
+        const scale = desiredSize / maxDim;
+        model.scale.setScalar(scale);
+
+        // Re-center after scale
+        box.setFromObject(model);
+        box.getCenter(center);
+        model.position.sub(center);
+
+        console.log('int.glb loaded — original size:', maxDim.toFixed(2), '| scale applied:', scale.toFixed(4));
+    }, undefined, (err) => {
+        console.error('Failed to load int.glb:', err);
+    });
+
+    window.addEventListener('resize', () => {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+    });
+
+    // --- Manual Y-axis drag to spin ---
+    let isDragging = false;
+    let lastX = 0;
+
+    window.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        lastX = e.clientX;
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging || !model || fullRotDone) return;
+        const delta = (e.clientX - lastX) * 0.01;
+        model.rotation.y = Math.min(model.rotation.y + delta, Math.PI * 2);
+        lastX = e.clientX;
+    });
+
+    // Touch support
+    window.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        lastX = e.touches[0].clientX;
+    });
+    window.addEventListener('touchend', () => { isDragging = false; });
+    window.addEventListener('touchmove', (e) => {
+        if (!isDragging || !model || fullRotDone) return;
+        const delta = (e.touches[0].clientX - lastX) * 0.01;
+        model.rotation.y = Math.min(model.rotation.y + delta, Math.PI * 2);
+        lastX = e.touches[0].clientX;
+    });
+
+    // Zoom state
+    const INITIAL_Z      = 400;
+    const TARGET_Z       = INITIAL_Z * 0.5; // 50% zoom in
+    let   zooming        = false;
+    let   fullRotDone    = false;
+    let   fadingOut      = false;
+    const overlayText    = document.getElementById('overlay-text');
+    const overlayLabel   = overlayText.querySelector('span');
+    const tempCenter     = new THREE.Vector3();
+    const tempTop        = new THREE.Vector3();
+    const tempBottom     = new THREE.Vector3();
+    const tempSize       = new THREE.Vector3();
+    const tempBox        = new THREE.Box3();
+
+    function worldToScreen(vec3) {
+        const p = vec3.clone().project(camera);
+        return {
+            x: (p.x * 0.5 + 0.5) * innerWidth,
+            y: (-p.y * 0.5 + 0.5) * innerHeight,
+        };
+    }
+
+    function updateOverlayAlignment() {
+        if (!model) return;
+
+        tempBox.setFromObject(model);
+        tempBox.getCenter(tempCenter);
+        tempBox.getSize(tempSize);
+
+        // Anchor text on projected model center.
+        const c = worldToScreen(tempCenter);
+
+        // Estimate a matching text size from projected model height.
+        tempTop.copy(tempCenter).y += tempSize.y * 0.32;
+        tempBottom.copy(tempCenter).y -= tempSize.y * 0.32;
+        const top2D = worldToScreen(tempTop);
+        const bottom2D = worldToScreen(tempBottom);
+        const projectedHeight = Math.abs(bottom2D.y - top2D.y);
+        const fontPx = Math.max(56, projectedHeight * 0.92);
+
+        overlayLabel.style.left = `${c.x}px`;
+        overlayLabel.style.top = `${c.y}px`;
+        overlayLabel.style.fontSize = `${fontPx}px`;
+    }
+
+    // Log rotation.y to console on every frame (throttled to ~10/s)
+    let logTimer = 0;
+
+    renderer.setAnimationLoop((time) => {
+        if (model) {
+            // Auto-rotate until full rotation
+            if (!fullRotDone) {
+                model.rotation.y = Math.min(model.rotation.y + 0.01, Math.PI * 2);
+            }
+
+            // Throttled console log
+            if (time - logTimer > 100) {
+                const pct = (model.rotation.y / (Math.PI * 2) * 100).toFixed(1);
+                console.log('rotation.y =', model.rotation.y.toFixed(4), '| (~', pct, '% of full rotation)');
+                logTimer = time;
+            }
+
+            // Trigger zoom once model passes 100% (2π) rotation
+            if (!fullRotDone && Math.abs(model.rotation.y) >= Math.PI * 2) {
+                fullRotDone = true;
+                zooming     = true;
+                console.log('✅ Full rotation reached — zooming in 50%');
+            }
+
+            // Smooth zoom + fade bg to black
+            if (zooming) {
+                camera.position.z += (TARGET_Z - camera.position.z) * 0.05;
+
+                // Lerp background from white to black
+                scene.background.lerp(new THREE.Color(0x000000), 0.05);
+
+                // Keep text anchored while approaching final zoom.
+                updateOverlayAlignment();
+
+                if (Math.abs(camera.position.z - TARGET_Z) < 0.1) {
+                    camera.position.z = TARGET_Z;
+                    scene.background.set(0x000000);
+                    zooming = false;
+                    fadingOut = true;
+
+                    // One final snap for precise placement at end state.
+                    updateOverlayAlignment();
+
+                    // Show overlay text
+                    overlayText.classList.add('visible');
+                    console.log('✅ Zoom complete — fading out model');
+                }
+            }
+
+            // Fade out the model meshes
+            if (fadingOut) {
+                // Keep it locked as material opacity changes.
+                updateOverlayAlignment();
+                let allGone = true;
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material.transparent = true;
+                        child.material.opacity = Math.max(0, child.material.opacity - 0.02);
+                        if (child.material.opacity > 0) allGone = false;
+                    }
+                });
+                if (allGone) {
+                    fadingOut = false;
+                    model.visible = false;
+                    console.log('✅ Model faded out');
+                }
+            }
+        }
+
+        renderer.render(scene, camera);
+    });
+</script>
+</body>
+</html>
+

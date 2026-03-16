@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style2.css">
+</head>
+<body>
+
+<nav id="nav">
+    <div class="nav-links"></div>
+    <div class="logo">
+        <svg id="nav-logo" width="32" height="32" viewBox="0 0 87 71" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3.41797 70.0195C1.13932 70.0195 0 68.7988 0 66.3574V3.66211C0 1.2207 1.13932 0 3.41797 0H10.8398C13.1185 0 14.2578 1.2207 14.2578 3.66211V66.3574C14.2578 68.7988 13.1185 70.0195 10.8398 70.0195H3.41797ZM33.3008 70.0195C31.0221 70.0195 29.8828 68.7988 29.8828 66.3574V3.66211C29.8828 1.2207 31.0221 0 33.3008 0H40.5273C43.3268 0 45.4427 1.13932 46.875 3.41797L71.7773 43.4082H72.1191C71.9564 41.4551 71.875 39.502 71.875 37.5488V3.66211C71.875 1.2207 73.0143 0 75.293 0H82.7148C84.9935 0 86.1328 1.2207 86.1328 3.66211V66.3574C86.1328 68.7988 84.9935 70.0195 82.7148 70.0195H75.9766C73.1771 70.0195 71.0612 68.8802 69.6289 66.6016L44.2383 25.8789H43.8965C44.0592 27.832 44.1406 29.7852 44.1406 31.7383V66.3574C44.1406 68.7988 43.0013 70.0195 40.7227 70.0195H33.3008Z" fill="white"/>
+        </svg>
+    </div>
+    <div class="nav-links"></div>
+</nav>
+
+<div class="banner">
+    <div class="title">
+        <svg id="hero-logo" width="360" height="360" viewBox="0 0 87 71" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path pathLength="1" d="M3.41797 70.0195C1.13932 70.0195 0 68.7988 0 66.3574V3.66211C0 1.2207 1.13932 0 3.41797 0H10.8398C13.1185 0 14.2578 1.2207 14.2578 3.66211V66.3574C14.2578 68.7988 13.1185 70.0195 10.8398 70.0195H3.41797ZM33.3008 70.0195C31.0221 70.0195 29.8828 68.7988 29.8828 66.3574V3.66211C29.8828 1.2207 31.0221 0 33.3008 0H40.5273C43.3268 0 45.4427 1.13932 46.875 3.41797L71.7773 43.4082H72.1191C71.9564 41.4551 71.875 39.502 71.875 37.5488V3.66211C71.875 1.2207 73.0143 0 75.293 0H82.7148C84.9935 0 86.1328 1.2207 86.1328 3.66211V66.3574C86.1328 68.7988 84.9935 70.0195 82.7148 70.0195H75.9766C73.1771 70.0195 71.0612 68.8802 69.6289 66.6016L44.2383 25.8789H43.8965C44.0592 27.832 44.1406 29.7852 44.1406 31.7383V66.3574C44.1406 68.7988 43.0013 70.0195 40.7227 70.0195H33.3008Z" fill="white"/>
+        </svg>
+    </div>
+</div>
+
+<script>
+    const hero   = document.getElementById('hero-logo');
+    const navLogo = document.getElementById('nav-logo');
+
+    // Wait for outline draw to finish (3s), then fly to nav position
+    setTimeout(() => {
+        const heroRect = hero.getBoundingClientRect();
+        const navRect  = navLogo.getBoundingClientRect();
+
+        // How much to translate and scale
+        const scaleX = navRect.width  / heroRect.width;
+        const scaleY = navRect.height / heroRect.height;
+        const scale  = Math.min(scaleX, scaleY);
+
+        const heroMidX = heroRect.left + heroRect.width  / 2;
+        const heroMidY = heroRect.top  + heroRect.height / 2;
+        const navMidX  = navRect.left  + navRect.width   / 2;
+        const navMidY  = navRect.top   + navRect.height  / 2;
+
+        const tx = navMidX - heroMidX;
+        const ty = navMidY - heroMidY;
+
+        hero.style.transition = 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        hero.style.transformOrigin = '50% 50%';
+        hero.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+
+        // Fade in nav logo after hero lands
+        setTimeout(() => {
+            navLogo.style.transition = 'opacity 0.4s ease';
+            navLogo.style.opacity = '1';
+
+            // Hide hero once nav logo visible
+            setTimeout(() => {
+                hero.style.transition += ', opacity 0.3s ease';
+                hero.style.opacity = '0';
+
+                // Invert: bg → white, nav logo → black
+                setTimeout(() => {
+                    document.body.style.transition = 'background 0.8s ease';
+                    document.body.style.background = '#fff';
+
+                    navLogo.style.transition = 'opacity 0.4s ease, filter 0.8s ease';
+                    navLogo.style.filter = 'invert(1)'; // white → black
+                }, 400);
+            }, 300);
+        }, 700);
+
+    }, 3000);
+</script>
+
+</body>
+</html>
+
