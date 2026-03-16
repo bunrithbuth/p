@@ -7,11 +7,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const lenis = new Lenis();
   lenis.on("scroll", ScrollTrigger.update);
-
   gsap.ticker.add((time) => {
     lenis.raf(time * 1000);
   });
-
   gsap.ticker.lagSmoothing(0);
 
   const nav = document.querySelector("nav");
@@ -47,9 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  for (let i = 0; i < frameCount; i++) {
+  for (let i = frameCount; i > 0; i--) {
     const img = new Image();
-    img.onload = onload;
+    img.onload = onLoad;
     img.onerror = function () {
       onLoad.call(this);
     };
@@ -90,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ScrollTrigger.create({
       trigger: ".hero",
       start: "top top",
-      end: `--${window.innerHeight + 7}px`,
+      end: `+=${window.innerHeight * 7}px`,
       pin: true,
       pinSpacing: true,
       scrub: 1,
@@ -99,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const animationProgress = Math.min(Math.max(progress/0.9, 0), 1);
         const targetFrame = Math.round(animationProgress * (frameCount - 1));
-        videoFrames.frame = targetFrame;
+        videoFrame.frame = targetFrame;
         render();
 
         if (progress <= 0.1)  {
@@ -121,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
           gsap.set(header, {
-            transform: `translate(-50%, -50%) translateZ(${translateZ}px)`,
+            transform: `translate(-0%, -0%) translateZ(${translateZ}px)`,
             opacity,
           });
         } else {

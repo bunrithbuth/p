@@ -38,6 +38,7 @@ a {
     text-decoration: none;
     text-transform: uppercase;
     font-size: 0.8rem;
+    font-weight: 500;
     color: var(--fg);
 }
 
@@ -69,7 +70,7 @@ nav {
     display: flex;
     align-items: center;
     gap: 2rem;
-    will-color: opacity;
+    will-change: opacity;
     z-index: 2;
 }
 
@@ -113,9 +114,9 @@ section {
 
 .outro {
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
+    text-align: center;
     padding: 2rem;
     background-color: var(--bg);
     color: var(--fg);
@@ -141,7 +142,7 @@ header {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(50%, 50%);
+    transform: translate(-50%, -50%);
     width: 100vw;
     display: flex;
     flex-direction: column;
