@@ -81,7 +81,9 @@ jobs:
             docker compose --env-file .env -f docker-compose.ec2.yml up -d --remove-orphans
             docker run --rm \
               --network p_default \
-              -e DATABASE_URL="postgresql://${{ secrets.POSTGRES_USER || 'postgres' }}:${{ secrets.POSTGRES_PASSWORD || 'postgres' }}@nextjs-dashboard-postgres-prod:5432/${{ secrets.POSTGRES_DB || 'dashboard' }}?schema=public" \
+              --env-file .env \
+              -e DATABASE_URL="postgresql://$(grep POSTGRES_USER .env | cut -d= -f2):$(grep POSTGRES_PASSWORD .env | cut -d= -f2)@nextjs-dashboard-postgres-prod:5432/$(grep POSTGRES_DB .env | cut -d= -f2)?schema=public" \
+              -e PRISMA_DATABASE_URL="postgresql://$(grep POSTGRES_USER .env | cut -d= -f2):$(grep POSTGRES_PASSWORD .env | cut -d= -f2)@nextjs-dashboard-postgres-prod:5432/$(grep POSTGRES_DB .env | cut -d= -f2)?schema=public" \
               ${{ env.IMAGE_NAME }}:migrator-${{ github.sha }}
             docker image prune -f
 
