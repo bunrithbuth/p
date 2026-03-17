@@ -5,8 +5,4 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
-  datasource: {
-    url: "postgresql://postgres:postgres@postgres:5432/dashboard",
-  },
 });
-
