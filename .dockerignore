@@ -12,3 +12,6 @@ yarn-error.log*
 pnpm-debug.log*
 .env*
 
+# Keep test assets in repo, but do not send them in Docker build context.
+public/tests
+public/tests/**
