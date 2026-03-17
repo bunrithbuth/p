@@ -102,14 +102,15 @@ jobs:
             mkdir -p "$HOME/apps/p"
             cd "$HOME/apps/p"
 
-            printf '%s\n' 'services:' '  app:' '    image: "${IMAGE_TAG:-bunrithbuth/pp:latest}"' '    container_name: nextjs-dashboard-prod' '    ports:' '      - "80:3000"' '    environment:' '      NODE_ENV: production' '      PORT: 3000' '      HOSTNAME: 0.0.0.0' '      DATABASE_URL: "${DATABASE_URL:-}"' '      POSTGRES_URL: "${POSTGRES_URL:-}"' '      AUTH_SECRET: "${AUTH_SECRET:-}"' '      AUTH_URL: "${AUTH_URL:-}"' '    restart: unless-stopped' > docker-compose.ec2.yml
+            printf '%s\n' 'services:' '  postgres:' '    image: "postgres:17-alpine"' '    container_name: nextjs-dashboard-postgres-prod' '    environment:' '      POSTGRES_USER: "${POSTGRES_USER:-postgres}"' '      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"' '      POSTGRES_DB: "${POSTGRES_DB:-dashboard}"' '    volumes:' '      - "postgres_data:/var/lib/postgresql/data"' '    healthcheck:' '      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]' '      interval: 10s' '      timeout: 5s' '      retries: 10' '    restart: unless-stopped' '  app:' '    image: "${IMAGE_TAG:-bunrithbuth/pp:latest}"' '    container_name: nextjs-dashboard-prod' '    ports:' '      - "80:3000"' '    depends_on:' '      postgres:' '        condition: service_healthy' '    environment:' '      NODE_ENV: production' '      PORT: 3000' '      HOSTNAME: 0.0.0.0' '      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-dashboard}?schema=public"' '      POSTGRES_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-dashboard}?schema=public"' '      AUTH_SECRET: "${AUTH_SECRET:-}"' '      AUTH_URL: "${AUTH_URL:-}"' '    restart: unless-stopped' 'volumes:' '  postgres_data:' > docker-compose.ec2.yml
 
-            printf '%s\n' "IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}" "DATABASE_URL=${{ secrets.DATABASE_URL }}" "POSTGRES_URL=${{ secrets.POSTGRES_URL }}" "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" "AUTH_URL=${{ secrets.AUTH_URL }}" > .env
+            printf '%s\n' "IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}" "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" "AUTH_URL=${{ secrets.AUTH_URL }}" > .env
 
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             docker compose version
             docker compose --env-file .env -f docker-compose.ec2.yml config > /tmp/compose.rendered.yml
             docker compose --env-file .env -f docker-compose.ec2.yml pull
             docker compose --env-file .env -f docker-compose.ec2.yml up -d --remove-orphans
+            docker compose --env-file .env -f docker-compose.ec2.yml exec -T app sh -lc 'npx -y prisma@7.5.0 migrate deploy'
             docker image prune -f
 
