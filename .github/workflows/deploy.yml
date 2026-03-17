@@ -76,8 +76,31 @@ jobs:
 
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             docker compose version
+
+            # Free Docker disk before pulling new images (keep DB volume intact).
+            echo "Disk usage before cleanup"
+            df -h
+            docker system df || true
+            docker image prune -af || true
+            docker builder prune -af || true
+            docker container prune -f || true
+
+            ROOT_USED_PCT=$(df -P / | awk 'NR==2 {gsub("%","",$5); print $5}')
+            if [ "${ROOT_USED_PCT:-0}" -ge 90 ]; then
+              echo "Root FS usage ${ROOT_USED_PCT}% >= 90, running stronger Docker prune (no volumes)."
+              docker system prune -af || true
+            fi
+
+            echo "Disk usage after cleanup"
+            df -h
+            docker system df || true
+
             docker compose --env-file .env -f docker-compose.ec2.yml config > /tmp/compose.rendered.yml
-            docker compose --env-file .env -f docker-compose.ec2.yml pull
+            if ! docker compose --env-file .env -f docker-compose.ec2.yml pull; then
+              echo "Compose pull failed once; retrying after additional prune."
+              docker system prune -af || true
+              docker compose --env-file .env -f docker-compose.ec2.yml pull
+            fi
             docker compose --env-file .env -f docker-compose.ec2.yml up -d --remove-orphans
             docker run --rm \
               --network p_default \
