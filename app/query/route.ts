@@ -20,8 +20,17 @@ async function listInvoices(amount: number) {
 export async function GET(request: Request) {
 	try {
 		const amountParam = new URL(request.url).searchParams.get('amount');
-		const parsedAmount = Number(amountParam);
-		const amount = Number.isFinite(parsedAmount) ? parsedAmount : 666;
+		let amount = 666;
+
+		if (amountParam !== null) {
+			const normalizedAmount = amountParam.trim();
+			if (normalizedAmount !== '') {
+				const parsedAmount = Number(normalizedAmount);
+				if (Number.isFinite(parsedAmount)) {
+					amount = parsedAmount;
+				}
+			}
+		}
 
 		return Response.json(await listInvoices(amount));
 	} catch (error) {
