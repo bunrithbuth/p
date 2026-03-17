@@ -68,6 +68,6 @@ jobs:
             docker compose --env-file .env -f docker-compose.ec2.yml config > /tmp/compose.rendered.yml
             docker compose --env-file .env -f docker-compose.ec2.yml pull
             docker compose --env-file .env -f docker-compose.ec2.yml up -d --remove-orphans
-            docker exec nextjs-dashboard-prod pnpm prisma:migrate:deploy
+            docker exec -u root -w /app nextjs-dashboard-prod node_modules/.bin/prisma migrate deploy
             docker image prune -f
 
