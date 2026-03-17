@@ -42,52 +42,9 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-  prisma-migrate:
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/dashboard?schema=public
-      PRISMA_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/dashboard?schema=public
-      POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:5432/dashboard?schema=public
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: dashboard
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres -d dashboard"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-          --health-start-period=10s
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Deploy Prisma migrations
-        run: pnpm prisma:migrate:deploy
-
   deploy-ec2:
     runs-on: ubuntu-latest
-    needs: [build-and-push, prisma-migrate]
+    needs: build-and-push
     environment: production
     steps:
       - name: Deploy on EC2
@@ -111,6 +68,6 @@ jobs:
             docker compose --env-file .env -f docker-compose.ec2.yml config > /tmp/compose.rendered.yml
             docker compose --env-file .env -f docker-compose.ec2.yml pull
             docker compose --env-file .env -f docker-compose.ec2.yml up -d --remove-orphans
-            docker compose --env-file .env -f docker-compose.ec2.yml exec -T app sh -lc 'npx -y prisma@7.5.0 migrate deploy'
+            docker exec nextjs-dashboard-prod pnpm prisma:migrate:deploy
             docker image prune -f
 
