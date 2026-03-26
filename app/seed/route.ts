@@ -89,7 +89,24 @@ export async function GET() {
     await seedRevenue();
 
     return Response.json({ message: 'Database seeded successfully' });
-  } catch (error) {
-    return Response.json({ error }, { status: 500 });
+  } catch (error: unknown) {
+    console.error('Seed route failed:', error);
+
+    const errorCode =
+      typeof error === 'object' && error !== null && 'code' in error
+        ? String((error as { code?: unknown }).code)
+        : undefined;
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown seed error';
+
+    return Response.json(
+      {
+        error: {
+          code: errorCode,
+          message: errorMessage,
+        },
+      },
+      { status: 500 },
+    );
   }
 }

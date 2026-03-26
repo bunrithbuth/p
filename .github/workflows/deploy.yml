@@ -58,7 +58,10 @@ jobs:
     needs: build-and-push
     environment: production
     steps:
-      - name: Deploy on EC2
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure deploy directory on EC2
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -68,12 +71,38 @@ jobs:
           script: |
             set -euo pipefail
             mkdir -p "$HOME/apps/p"
+
+      - name: Upload compose file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          source: deploy/docker-compose.ec2.yml
+          target: ~/apps/p
+
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
             cd "$HOME/apps/p"
 
-            printf '%s\n' 'services:' '  postgres:' '    image: "postgres:17-alpine"' '    container_name: nextjs-dashboard-postgres-prod' '    environment:' '      POSTGRES_USER: "${POSTGRES_USER:-postgres}"' '      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"' '      POSTGRES_DB: "${POSTGRES_DB:-dashboard}"' '    ports:' '      - "127.0.0.1:5432:5432"' '    volumes:' '      - "postgres_data:/var/lib/postgresql/data"' '    healthcheck:' '      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]' '      interval: 10s' '      timeout: 5s' '      retries: 10' '    restart: unless-stopped' '  app:' '    image: "${IMAGE_TAG:-bunrithbuth/pp:latest}"' '    container_name: nextjs-dashboard-prod' '    ports:' '      - "80:3000"' '    depends_on:' '      postgres:' '        condition: service_healthy' '    environment:' '      NODE_ENV: production' '      PORT: 3000' '      HOSTNAME: 0.0.0.0' '      RUNNING_IN_DOCKER: "true"' '      PRISMA_DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-dashboard}?schema=public"' '      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-dashboard}?schema=public"' '      POSTGRES_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-dashboard}?schema=public"' '      AUTH_SECRET: "${AUTH_SECRET:-}"' '      AUTH_URL: "${AUTH_URL:-}"' '    restart: unless-stopped' 'volumes:' '  postgres_data:' > docker-compose.ec2.yml
-
-            printf '%s\n' "IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}" "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" "AUTH_URL=${{ secrets.AUTH_URL }}" > .env
-
+            printf '%s\n' \
+            "IMAGE_TAG=${{ env.IMAGE_NAME }}:${{ github.sha }}" \
+            "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" \
+            "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" \
+            "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" \
+            "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
+            "AUTH_URL=${{ secrets.AUTH_URL }}" \
+            "DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@nextjs-dashboard-postgres-prod:5432/${{ secrets.POSTGRES_DB }}?schema=public" \
+            "PRISMA_DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@nextjs-dashboard-postgres-prod:5432/${{ secrets.POSTGRES_DB }}?schema=public" \
+            > .env
+            
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             docker compose version
 
@@ -104,8 +133,6 @@ jobs:
             docker compose --env-file .env -f docker-compose.ec2.yml up -d --remove-orphans
             docker run --rm \
               --network p_default \
-              -e DATABASE_URL="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@nextjs-dashboard-postgres-prod:5432/${{ secrets.POSTGRES_DB }}?schema=public" \
-              -e PRISMA_DATABASE_URL="postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@nextjs-dashboard-postgres-prod:5432/${{ secrets.POSTGRES_DB }}?schema=public" \
+              --env-file .env \
               ${{ env.IMAGE_NAME }}:migrator-${{ github.sha }}
             docker image prune -f
-

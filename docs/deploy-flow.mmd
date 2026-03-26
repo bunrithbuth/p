@@ -1,0 +1,21 @@
+flowchart TD
+  A[Push to main] --> B[GitHub Actions deploy workflow]
+  A2[Manual workflow_dispatch] --> B
+
+  B --> C[build-and-push job]
+  C --> C1[Checkout repository]
+  C1 --> C2[Set up Docker Buildx and login to Docker Hub]
+  C2 --> C3[Build app image and push tags latest and commit SHA]
+  C3 --> C4[Build migrator image target and push tags migrator-latest and migrator-SHA]
+
+  C4 --> D[deploy-ec2 job]
+  D --> D0[Checkout repository]
+  D0 --> D1[SSH ensure EC2 directory HOME/apps/p exists]
+  D1 --> D2[SCP upload deploy/docker-compose.ec2.yml to EC2 HOME/apps/p]
+  D2 --> D3[SSH deploy script on EC2]
+  D3 --> D4[Generate .env on EC2 from GitHub secrets and workflow values]
+  D4 --> D5[.env includes IMAGE_TAG POSTGRES AUTH DATABASE_URL and PRISMA_DATABASE_URL]
+  D5 --> D6[docker compose --env-file .env -f docker-compose.ec2.yml pull]
+  D6 --> D7[docker compose --env-file .env -f docker-compose.ec2.yml up -d --remove-orphans]
+  D7 --> D8[docker run --rm --network p_default --env-file .env image migrator-SHA]
+  D8 --> E[App live on EC2 port 80]
