@@ -50,28 +50,31 @@ Stop and remove the container:
 docker compose -f docker-compose.prod.yml down
 ```
 
-If you need database-backed pages, set `DATABASE_URL`/`POSTGRES_URL` and `AUTH_SECRET` in your shell before starting Compose.
+For local DB-backed pages, provide DB envs before starting Compose (for example `PRISMA_DATABASE_URL`, `DATABASE_URL`, or `POSTGRES_URL`).
+
+`AUTH_SECRET`/`AUTH_URL` are only needed if auth routes/session handling are enabled in your app runtime.
 
 ## GitHub Actions CD (Build -> Docker Hub -> EC2)
 
 This repo includes `.github/workflows/deploy.yml` to automate:
 
-1. Build Docker image from `Dockerfile`
-2. Run `prisma migrate deploy` using `DATABASE_URL`
-3. Push image to Docker Hub (`bunrithbuth/pp`)
-4. SSH to EC2 and run `docker compose up -d` with the new tag
+1. Build and push app image tags (`latest`, `${sha}`)
+2. Build and push migrator image tags (`migrator-latest`, `migrator-${sha}`)
+3. Upload `deploy/docker-compose.ec2.yml` to EC2 and generate `.env` from GitHub secrets
+4. Run `docker compose pull/up` and then run migrator with `docker run --env-file .env`
 
-### Required GitHub repository secrets
+### Required GitHub Actions secrets
 
+- `DOCKERHUB_USERNAME` (example: `bunrithbuth`)
+- `DOCKERHUB_TOKEN` (Docker Hub access token)
 - `EC2_HOST` (example: `ec2-52-14-68-56.us-east-2.compute.amazonaws.com`)
 - `EC2_USER` (usually `ec2-user`)
 - `EC2_SSH_PRIVATE_KEY` (contents of your private key, e.g. `new.pem`)
-- `DOCKERHUB_USERNAME` (example: `bunrithbuth`)
-- `DOCKERHUB_TOKEN` (Docker Hub access token)
-- `DATABASE_URL`
-- `POSTGRES_URL` (optional compatibility)
-- `AUTH_SECRET`
-- `AUTH_URL` (recommended)
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `POSTGRES_DB`
+- `AUTH_SECRET` (set if auth is enabled; otherwise can be empty)
+- `AUTH_URL` (recommended when auth is enabled)
 
 The workflow runs on pushes to `main` (and manually via `workflow_dispatch`).
 
